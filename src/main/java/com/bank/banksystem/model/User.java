@@ -1,6 +1,6 @@
 package com.bank.banksystem.model;
 import jakarta.persistence.*;
-import java.util.List;
+
 
 @Entity
 @Table(name = "users")
