@@ -1,7 +1,13 @@
-INSERT INTO users (username, password, phone, balance) VALUES ('young', 'young0216', 426660916, 0) ON DUPLICATE KEY UPDATE username=username;
+-- users 
+INSERT INTO users (username, password, phone, balance)
+VALUES ('young', 'young0216', 426660916, 0)
+ON CONFLICT (username) DO NOTHING;
 
-INSERT INTO users (username, password, phone, balance) VALUES ('kittynini', 'kittynini0425', 13380970745, 1000) ON DUPLICATE KEY UPDATE username=username;
+INSERT INTO users (username, password, phone, balance)
+VALUES ('kittynini', 'kittynini0425', 13380970745, 1000)
+ON CONFLICT (username) DO NOTHING;
 
+-- transactions 
 INSERT INTO transactions (transaction_id, from_user, to_user, amount, timestamp, status, description)
 VALUES (
     'test1',
@@ -12,7 +18,7 @@ VALUES (
     'EXPENSE',
     'testing'
 )
-ON DUPLICATE KEY UPDATE transaction_id=transaction_id;
+ON CONFLICT (transaction_id) DO NOTHING;
 
 INSERT INTO transactions (transaction_id, from_user, to_user, amount, timestamp, status, description)
 VALUES (
@@ -24,7 +30,7 @@ VALUES (
     'EXPENSE',
     'testing'
 )
-ON DUPLICATE KEY UPDATE transaction_id=transaction_id;
+ON CONFLICT (transaction_id) DO NOTHING;
 
 INSERT INTO transactions (transaction_id, from_user, to_user, amount, timestamp, status, description)
 VALUES (
@@ -36,7 +42,7 @@ VALUES (
     'INCOME',
     'testing'
 )
-ON DUPLICATE KEY UPDATE transaction_id=transaction_id;
+ON CONFLICT (transaction_id) DO NOTHING;
 
 INSERT INTO transactions (transaction_id, from_user, to_user, amount, timestamp, status, description)
 VALUES (
@@ -48,4 +54,4 @@ VALUES (
     'INCOME',
     'testing'
 )
-ON DUPLICATE KEY UPDATE transaction_id=transaction_id;
+ON CONFLICT (transaction_id) DO NOTHING;
