@@ -19,12 +19,16 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain)
             throws ServletException, IOException {
-        
+
         String path = request.getServletPath();
-        if (path.startsWith("/auth/login") || path.startsWith("/actuator")) {
+
+        
+        if (path.startsWith("/auth/login") || path.startsWith("/actuator") || path.startsWith("/error")) {
+            System.out.println("[JwtAuthFilter] Skipping JWT filter for: " + path);
             filterChain.doFilter(request, response);
             return;
-        }        
+        }
+
         String authHeader = request.getHeader("Authorization");
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -38,7 +42,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 // link to spring security context
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(username, null, Collections.emptyList());
-
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
             } catch (JwtException e) {
