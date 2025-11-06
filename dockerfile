@@ -21,7 +21,7 @@ RUN gradle bootJar --no-daemon
 # =============================
 # run stage
 # =============================
-FROM openjdk:21-jdk-slim
+FROM eclipse-temurin:21-jdk
 
 # Create non-root user and group
 RUN groupadd --system spring && useradd --system --create-home --gid spring springuser
