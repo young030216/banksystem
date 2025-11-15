@@ -184,7 +184,8 @@ resource "aws_instance" "bank_ec2_instance" {
   associate_public_ip_address = true
 
   vpc_security_group_ids = [aws_security_group.bank_ec2_sg.id]
-
+  iam_instance_profile = aws_iam_instance_profile.bank_ec2_instance_profile.name
+  key_name = "banksystem-key"
   #User data to install web server
   user_data = <<-EOF
                 #!/bin/bash
@@ -218,4 +219,113 @@ output "ec2_public_ip" {
 output "ec2_public_dns" {
   description = "Public DNS of the EC2 instance"
   value       = aws_instance.bank_ec2_instance.public_dns
+}
+
+# Main SQS Queue
+resource "aws_sqs_queue" "banking_notifications" {
+  name                        = "banking-notifications"
+  delay_seconds               = 0
+  max_message_size            = 262144
+  message_retention_seconds   = 1209600   # 14 days
+  receive_wait_time_seconds   = 0
+  visibility_timeout_seconds  = 30
+
+  sqs_managed_sse_enabled = true
+
+  tags = {
+    Name        = "banking-notifications"
+    Environment = "production"
+  }
+}
+
+# Dead Letter Queue (DLQ)
+resource "aws_sqs_queue" "banking_notifications_dlq" {
+  name                      = "banking-notifications-dlq"
+  delay_seconds             = 0
+  max_message_size          = 262144
+  message_retention_seconds = 1209600
+  receive_wait_time_seconds = 0
+
+  sqs_managed_sse_enabled = true
+
+  tags = {
+    Name        = "banking-notifications-dlq"
+    Environment = "production"
+  }
+}
+
+# Redrive policy for moving failed messages to DLQ
+resource "aws_sqs_queue_redrive_policy" "banking_notifications_redrive" {
+  queue_url = aws_sqs_queue.banking_notifications.id
+
+  redrive_policy = jsonencode({
+    deadLetterTargetArn = aws_sqs_queue.banking_notifications_dlq.arn
+    maxReceiveCount     = 3
+  })
+}
+
+# IAM Policy for EC2 to access SQS
+resource "aws_iam_policy" "bank_sqs_policy" {
+  name        = "bank-sqs-access-policy"
+  description = "Policy for EC2 SQS access"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "sqs:SendMessage",
+          "sqs:ReceiveMessage",
+          "sqs:DeleteMessage",
+          "sqs:GetQueueAttributes",
+          "sqs:GetQueueUrl",
+          "sqs:ListQueues"
+        ]
+        Resource = [
+          aws_sqs_queue.banking_notifications.arn,
+          aws_sqs_queue.banking_notifications_dlq.arn
+        ]
+      }
+    ]
+  })
+}
+
+# IAM Role for EC2
+resource "aws_iam_role" "bank_ec2_role" {
+  name = "bank-ec2-sqs-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+}
+
+# Attach SQS access policy to role
+resource "aws_iam_role_policy_attachment" "bank_ec2_sqs_attach" {
+  role       = aws_iam_role.bank_ec2_role.name
+  policy_arn = aws_iam_policy.bank_sqs_policy.arn
+}
+
+# Instance profile for EC2
+resource "aws_iam_instance_profile" "bank_ec2_instance_profile" {
+  name = "bank-ec2-instance-profile"
+  role = aws_iam_role.bank_ec2_role.name
+}
+
+# Outputs
+output "sqs_main_queue_url" {
+  value = aws_sqs_queue.banking_notifications.id
+}
+
+output "sqs_dlq_url" {
+  value = aws_sqs_queue.banking_notifications_dlq.id
 }
