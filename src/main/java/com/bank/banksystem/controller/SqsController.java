@@ -1,6 +1,8 @@
 package com.bank.banksystem.controller;
 
 import com.bank.banksystem.service.SqsService;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -16,5 +18,10 @@ public class SqsController {
     @PostMapping("/send")
     public String send(@RequestParam String message) {
         return sqsService.sendMessage(message);
+    }
+
+    @GetMapping("/receive")
+    public ResponseEntity<String> receiveMessage() {
+        return ResponseEntity.ok(sqsService.receiveMessage());
     }
 }
