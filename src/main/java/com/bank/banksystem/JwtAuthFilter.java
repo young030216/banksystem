@@ -34,30 +34,42 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String authHeader = request.getHeader("Authorization");
 
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            try {
-                String token = authHeader.substring(7);
-                Claims claims = JwtUtil.parseToken(token);
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            System.out.println("[JwtAuthFilter] Missing or invalid Authorization header");
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Missing or invalid Authorization header");
+            return;
+        }
 
-                // username
-                String username = claims.getSubject();
+        try {
+            String token = authHeader.substring(7);
+            System.out.println("[JwtAuthFilter] Token received: " + token.substring(0, Math.min(20, token.length())) + "...");
+            
+            Claims claims = JwtUtil.parseToken(token);
 
-                // add role user
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(
-                                username,
-                                null,
-                                List.of(new SimpleGrantedAuthority("ROLE_USER"))
-                        );
+            // username
+            String username = claims.getSubject();
+            System.out.println("[JwtAuthFilter] Token validated for user: " + username);
 
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+            // add role user
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(
+                            username,
+                            null,
+                            List.of(new SimpleGrantedAuthority("ROLE_USER"))
+                    );
 
-            } catch (JwtException e) {
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid JWT Token");
-                return;
-            }
-        } else {
-            System.out.println("[JwtAuthFilter] Missing Authorization header");
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            System.out.println("[JwtAuthFilter] Authentication set in SecurityContext");
+
+        } catch (JwtException e) {
+            System.out.println("[JwtAuthFilter] JWT validation failed: " + e.getMessage());
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid JWT Token: " + e.getMessage());
+            return;
+        } catch (Exception e) {
+            System.out.println("[JwtAuthFilter] Unexpected error: " + e.getMessage());
+            e.printStackTrace();
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication error");
+            return;
         }
 
         filterChain.doFilter(request, response);
