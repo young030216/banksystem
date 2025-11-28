@@ -1,0 +1,12 @@
+__pycache__/
+*.zip
+*.dist-info/
+boto3/
+botocore/
+dateutil/
+urllib3/
+jmespath/
+s3transfer/
+bin/
+six.py
+fpdf/
