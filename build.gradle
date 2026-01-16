@@ -35,6 +35,8 @@ dependencies {
 	implementation platform('software.amazon.awssdk:bom:2.27.21')
     implementation 'software.amazon.awssdk:sqs'
 	implementation 'software.amazon.awssdk:lambda'
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'io.micrometer:micrometer-registry-cloudwatch2'
 }
 
 tasks.named('test') {
