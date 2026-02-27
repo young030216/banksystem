@@ -33,13 +33,18 @@ public class Transaction {
     @Column(nullable = false)
     private TranscationStatus status;
 
+    @Column(nullable = false)
+    private String transferId;
+
 
 
     // Constructors
     public Transaction() {}
 
-    public Transaction(String transactionId, User fromUser, User toUser, Integer amount, String timestamp, TranscationStatus status, String description) {
+    public Transaction(String transactionId, User fromUser, User toUser, Integer amount, String timestamp, TranscationStatus status, String description, String transferId) {
         this.transactionId = transactionId;
+        this.transferId = transferId;
+        
         this.fromUser = fromUser;
         this.toUser = toUser;
         this.amount = amount;
@@ -107,6 +112,13 @@ public class Transaction {
     }
     public void setDescription(String description) {
         this.description = description;
+    }
+    public String getTransferId() {
+        return transferId;
+    }
+
+    public void setTransferId(String transferId) {
+        this.transferId = transferId;
     }
 
 
